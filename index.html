@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Channel Markup Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --teal:#416163;
+    --plum:#634161;
+    --rust:#8C4639;
+    --gold:#AD8B3A;
+    --paper:#F7F5F2;
+    --ink:#1A1F20;
+    --line:rgba(26,31,32,.14);
+    --line-soft:rgba(26,31,32,.08);
+    --muted:rgba(26,31,32,.58);
+    --card:#fff;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    font-size:15px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1020px;margin:0 auto;padding:40px 20px 72px}
+
+  /* ---------- header ---------- */
+  header{border-bottom:2px solid var(--ink);padding-bottom:20px;margin-bottom:32px}
+  .eyebrow{
+    font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--teal);font-weight:600;margin:0 0 8px
+  }
+  h1{
+    font-family:Fraunces,Georgia,serif;font-weight:600;
+    font-size:clamp(30px,5vw,44px);line-height:1.05;margin:0 0 10px;letter-spacing:-.01em
+  }
+  .lede{margin:0;color:var(--muted);max-width:56ch}
+  .lede b{color:var(--ink);font-weight:600}
+
+  /* ---------- layout ---------- */
+  .grid{display:grid;gap:28px;grid-template-columns:1fr}
+  @media(min-width:900px){.grid{grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:36px;align-items:start}}
+
+  .panel{
+    background:var(--card);border:1px solid var(--line);border-radius:4px;padding:24px
+  }
+  .panel + .panel{margin-top:20px}
+  h2{
+    font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;
+    margin:0 0 18px;color:var(--ink);display:flex;align-items:center;gap:10px
+  }
+  h2::after{content:"";flex:1;height:1px;background:var(--line-soft)}
+
+  /* ---------- OTA segmented ---------- */
+  .otas{display:grid;gap:8px}
+  .ota{
+    display:flex;align-items:baseline;justify-content:space-between;gap:12px;
+    padding:13px 15px;border:1px solid var(--line);border-radius:3px;background:transparent;
+    font:inherit;color:var(--ink);cursor:pointer;text-align:left;width:100%;
+    transition:background .14s,border-color .14s,color .14s
+  }
+  .ota:hover{border-color:var(--plum)}
+  .ota .nm{font-weight:600;font-size:15px}
+  .ota .cm{font-family:Fraunces,serif;font-size:15px;color:var(--muted)}
+  .ota[aria-pressed="true"]{background:var(--plum);border-color:var(--plum);color:var(--paper)}
+  .ota[aria-pressed="true"] .cm{color:rgba(247,245,242,.78)}
+
+  /* ---------- fields ---------- */
+  .field{margin-top:18px}
+  .field:first-of-type{margin-top:0}
+  .field label{display:block;font-size:13px;font-weight:600;margin-bottom:5px}
+  .hint{font-size:12px;color:var(--muted);margin:0 0 7px;line-height:1.4}
+  .inputwrap{position:relative;display:flex;align-items:center}
+  .inputwrap input{
+    width:100%;font:inherit;font-family:Fraunces,serif;font-size:17px;
+    padding:11px 36px 11px 13px;border:1px solid var(--line);border-radius:3px;
+    background:var(--paper);color:var(--ink);outline:none;transition:border-color .14s,box-shadow .14s
+  }
+  .inputwrap input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(65,97,99,.14)}
+  .inputwrap input:disabled{opacity:.4;cursor:not-allowed}
+  .inputwrap .pct{position:absolute;right:13px;color:var(--muted);font-size:14px;pointer-events:none}
+  input[type=number]::-webkit-outer-spin-button,
+  input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  input[type=number]{-moz-appearance:textfield}
+
+  .check{display:flex;align-items:center;gap:9px;margin-top:18px;font-size:13px;font-weight:500;cursor:pointer}
+  .check input{width:16px;height:16px;accent-color:var(--teal);cursor:pointer}
+  .check.off{opacity:.42;cursor:not-allowed}
+  .check.off input{cursor:not-allowed}
+
+  /* ---------- results ---------- */
+  .empty{
+    border:1px dashed var(--line);border-radius:4px;padding:52px 28px;text-align:center;color:var(--muted)
+  }
+  .empty strong{display:block;color:var(--ink);font-family:Fraunces,serif;font-size:19px;font-weight:600;margin-bottom:6px}
+  .empty ul{list-style:none;padding:0;margin:16px 0 0;font-size:13px}
+  .empty li{padding:3px 0}
+  .empty li.done{color:var(--teal)}
+  .empty li.done::before{content:"✓ ";font-weight:700}
+  .empty li.todo::before{content:"○ ";opacity:.5}
+
+  .headline{
+    background:var(--teal);color:var(--paper);border-radius:4px;padding:26px 28px;
+    display:flex;flex-wrap:wrap;gap:24px;align-items:flex-end;justify-content:space-between
+  }
+  .headline .big{font-family:Fraunces,serif;font-size:clamp(40px,8vw,60px);line-height:.95;font-weight:600}
+  .headline .lbl{font-size:11px;letter-spacing:.14em;text-transform:uppercase;opacity:.78;margin-bottom:8px}
+  .headline .side{text-align:right}
+  .headline .side .v{font-family:Fraunces,serif;font-size:24px;font-weight:600}
+  .goldbar{height:5px;background:var(--gold);border-radius:4px 4px 0 0;margin-bottom:-4px}
+
+  table{width:100%;border-collapse:collapse}
+  td{padding:9px 0;border-bottom:1px solid var(--line-soft);vertical-align:baseline}
+  td.n{text-align:right;font-family:Fraunces,serif;font-size:15px;white-space:nowrap;padding-left:14px}
+  tr:last-child td{border-bottom:none}
+  .sub{font-size:12px;color:var(--muted);display:block;margin-top:2px}
+  .eq{font-family:Fraunces,serif;font-size:13px;color:var(--teal);display:block;margin-top:3px}
+  tr.total td{border-top:2px solid var(--ink);border-bottom:none;padding-top:12px;font-weight:600}
+  tr.total td.n{font-size:19px}
+  .neg{color:var(--rust)}
+  .pos{color:var(--teal)}
+
+  .verdict{
+    border-left:3px solid var(--gold);background:rgba(173,139,58,.07);
+    padding:14px 16px;border-radius:0 3px 3px 0;margin-top:18px;font-size:14px
+  }
+  .verdict.short{border-left-color:var(--rust);background:rgba(140,70,57,.07)}
+  .verdict.ok{border-left-color:var(--teal);background:rgba(65,97,99,.07)}
+  .verdict b{font-weight:600}
+  .flag{
+    display:inline-block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+    font-weight:600;color:var(--rust);margin-bottom:4px
+  }
+  .err{border-left:3px solid var(--rust);background:rgba(140,70,57,.08);padding:16px;border-radius:0 3px 3px 0}
+  footer{margin-top:36px;padding-top:20px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+  footer p{margin:0 0 6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <p class="eyebrow">Short-term rental revenue tools</p>
+  <h1>Channel Markup Calculator</h1>
+  <p class="lede">Find the markup that leaves you with a <b>net $1,000</b> after channel commission, payment processing, and your deepest stacked discount.</p>
+</header>
+
+<div class="grid">
+
+  <!-- ============ INPUTS ============ -->
+  <div>
+    <div class="panel">
+      <h2>Channel</h2>
+      <div class="otas" id="otas"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Your numbers</h2>
+
+      <div class="field">
+        <label for="curMarkup">Current markup</label>
+        <p class="hint">What you're marking rates up by today on this channel.</p>
+        <div class="inputwrap"><input id="curMarkup" type="number" step="0.1" min="0" placeholder="0.0" inputmode="decimal"><span class="pct">%</span></div>
+      </div>
+
+      <div class="field">
+        <label for="maxDisc">Max discount</label>
+        <p class="hint">The deepest discount that can land on a booking — weekly, last-minute, member rate, or the sum if they stack.</p>
+        <div class="inputwrap"><input id="maxDisc" type="number" step="0.1" min="0" max="99" placeholder="0.0" inputmode="decimal"><span class="pct">%</span></div>
+      </div>
+
+      <label class="check" id="ccToggleWrap">
+        <input type="checkbox" id="ccToggle" checked>
+        <span id="ccToggleLabel">Channel processes the card</span>
+      </label>
+
+      <div class="field">
+        <label for="ccFee">Processing fee</label>
+        <div class="inputwrap"><input id="ccFee" type="number" step="0.01" min="0" max="99" placeholder="0.00" inputmode="decimal"><span class="pct">%</span></div>
+        <p class="hint" id="ccNote" style="margin:7px 0 0"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ RESULTS ============ -->
+  <div id="out"></div>
+
+</div>
+
+<footer>
+  <p><b>How it's modeled:</b> commission and processing are both taken as a percentage of the amount actually collected — that is, the rate <i>after</i> the discount — and are additive, not compounded. Taxes and cleaning are treated as pass-through and excluded.</p>
+  <p>Markup is applied to a $1,000 base rate. The result scales linearly, so the same percentage holds at any reservation value.</p>
+</footer>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var BASE = 1000;
+
+  var OTAS = {
+    airbnb:  { name:"Airbnb",       commission:15.5, processes:false,
+               note:"Airbnb pays out net of its host fee and absorbs card processing, so there is no separate fee to add." },
+    vrbo:    { name:"Vrbo",         commission:12,   processes:true,
+               note:"Applies when Vrbo collects the payment. Uncheck if you process the card yourself." },
+    booking: { name:"Booking.com",  commission:15,   processes:true,
+               note:"Applies when Booking.com collects via Payments by Booking. Uncheck if the guest pays you direct." }
+  };
+
+  var state = { ota:"airbnb", cc:true };
+
+  var $ = function(id){ return document.getElementById(id); };
+  var otasEl=$("otas"), out=$("out"), ccToggle=$("ccToggle"), ccFee=$("ccFee"),
+      ccNote=$("ccNote"), ccWrap=$("ccToggleWrap"), ccLabel=$("ccToggleLabel");
+
+  /* ---------- formatting ---------- */
+  function money(n){
+    return (n<0?"\u2212$":"$") + Math.abs(n).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+  }
+  function pct(n){
+    return (Math.round(n*100)/100).toLocaleString("en-US",{maximumFractionDigits:2}) + "%";
+  }
+  function esc(s){ return String(s).replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c];}); }
+
+  /* ---------- channel buttons ---------- */
+  Object.keys(OTAS).forEach(function(key){
+    var o = OTAS[key];
+    var b = document.createElement("button");
+    b.type="button"; b.className="ota"; b.setAttribute("aria-pressed", key===state.ota);
+    b.innerHTML = '<span class="nm">'+esc(o.name)+'</span><span class="cm">'+pct(o.commission)+'</span>';
+    b.addEventListener("click", function(){
+      state.ota = key;
+      Array.prototype.forEach.call(otasEl.children, function(el,i){
+        el.setAttribute("aria-pressed", Object.keys(OTAS)[i]===key);
+      });
+      syncCC(); render();
+    });
+    otasEl.appendChild(b);
+  });
+
+  /* ---------- cc fee availability ---------- */
+  function syncCC(){
+    var o = OTAS[state.ota];
+    ccToggle.disabled = !o.processes;
+    ccWrap.classList.toggle("off", !o.processes);
+    ccLabel.textContent = o.processes ? (o.name + " processes the card") : "Not applicable on " + o.name;
+    ccFee.disabled = !o.processes || !ccToggle.checked;
+    ccNote.textContent = o.note;
+  }
+
+  function feeActive(){
+    return OTAS[state.ota].processes && ccToggle.checked;
+  }
+
+  /* ---------- read a field ---------- */
+  function val(el){
+    var raw = el.value.trim();
+    if(raw === "") return null;
+    var n = parseFloat(raw);
+    return isFinite(n) ? n : null;
+  }
+
+  /* ---------- row helper ---------- */
+  function row(label, sub, value, cls){
+    return '<tr><td>' + esc(label) + (sub ? '<span class="sub">'+sub+'</span>' : '') +
+           '</td><td class="n'+(cls?" "+cls:"")+'">' + value + '</td></tr>';
+  }
+
+  /* ---------- render ---------- */
+  function render(){
+    syncCC();
+
+    var o = OTAS[state.ota];
+    var mk = val($("curMarkup")), dc = val($("maxDisc"));
+    var fe = feeActive() ? val(ccFee) : 0;
+
+    var checks = [
+      ["Current markup",     mk !== null],
+      ["Max discount",       dc !== null],
+      ["Processing fee",     feeActive() ? fe !== null : true]
+    ];
+
+    if(checks.some(function(c){ return !c[1]; })){
+      out.innerHTML =
+        '<div class="empty"><strong>The math appears here</strong>' +
+        'Fill in every field and the full breakdown unlocks.' +
+        '<ul>' + checks.map(function(c){
+          return '<li class="'+(c[1]?"done":"todo")+'">'+esc(c[0])+'</li>';
+        }).join("") + '</ul></div>';
+      return;
+    }
+
+    var c = o.commission/100, f = fe/100, d = dc/100, m = mk/100;
+    var keep = 1 - c - f;
+
+    if(d >= 1 || d < 0 || keep <= 0){
+      out.innerHTML = '<div class="panel err"><b>Those inputs can\'t be solved.</b><br>' +
+        (d>=1||d<0 ? 'A discount of '+pct(dc)+' leaves nothing to mark up.' :
+        'Commission plus processing comes to '+pct((c+f)*100)+', which consumes the entire booking.') + '</div>';
+      return;
+    }
+
+    /* --- solve --- */
+    var reqGross = BASE / keep;            // what must survive the discount
+    var reqList  = reqGross / (1 - d);     // what must be published
+    var reqMk    = (reqList / BASE - 1) * 100;
+
+    /* --- walk the money at the suggested markup --- */
+    var discAmt = reqList * d, commAmt = reqGross * c, feeAmt = reqGross * f;
+
+    /* --- what the current markup actually does --- */
+    var curList = BASE * (1 + m), curGross = curList * (1 - d), curNet = curGross * keep;
+    var gap = curNet - BASE;
+
+    var html = "";
+
+    /* headline */
+    html += '<div class="goldbar"></div>';
+    html += '<div class="headline"><div>' +
+      '<div class="lbl">Suggested markup on ' + esc(o.name) + '</div>' +
+      '<div class="big">' + pct(reqMk) + '</div></div>' +
+      '<div class="side"><div class="lbl">List the $1,000 night at</div>' +
+      '<div class="v">' + money(reqList) + '</div></div></div>';
+
+    /* solving for it */
+    html += '<div class="panel" style="margin-top:20px"><h2>Solving for break-even</h2><table>';
+    html += row("Target net in your pocket", "What a $1,000 direct booking would leave you", money(BASE));
+    html += row("Channel commission \u2014 " + o.name, "", "\u2212" + pct(o.commission));
+    html += row("Payment processing",
+                feeActive() ? "" : (o.processes ? "Switched off \u2014 you run the card" : "Not charged on " + o.name),
+                feeActive() ? "\u2212" + pct(fe) : "0%");
+    html += row("Share of the collected rate you keep", "100% \u2212 " + pct(o.commission) + " \u2212 " + pct(fe), pct(keep*100));
+    html += row("Rate that must survive the discount",
+                '<span class="eq">' + money(BASE) + " \u00f7 " + (keep).toFixed(4) + "</span>", money(reqGross));
+    html += row("Max discount to absorb", "", "\u2212" + pct(dc));
+    html += row("Rate you must publish",
+                '<span class="eq">' + money(reqGross) + " \u00f7 " + (1-d).toFixed(4) + "</span>", money(reqList));
+    html += '<tr class="total"><td>Markup over your $1,000 rate<span class="sub">' +
+            money(reqList) + " \u00f7 " + money(BASE) + " \u2212 1</span></td><td class=\"n\">" + pct(reqMk) + "</td></tr>";
+    html += '</table></div>';
+
+    /* proof */
+    html += '<div class="panel"><h2>Proof \u2014 a worst-case booking</h2><table>';
+    html += row("Published rate", "", money(reqList));
+    html += row("Guest takes the full " + pct(dc) + " discount", "", "\u2212" + money(discAmt), "neg");
+    html += row("Amount collected", "", money(reqGross));
+    html += row(o.name + " commission at " + pct(o.commission), "", "\u2212" + money(commAmt), "neg");
+    html += row("Processing at " + pct(fe), "", (feeAmt > 0 ? "\u2212" : "") + money(feeAmt), feeAmt>0?"neg":"");
+    html += '<tr class="total"><td>Net to you</td><td class="n pos">' + money(reqGross - commAmt - feeAmt) + '</td></tr>';
+    html += '</table><div class="verdict ok">Breaks even with the direct rate, even when every discount fires at once.</div></div>';
+
+    /* current position */
+    html += '<div class="panel"><h2>Where your current markup lands</h2><table>';
+    html += row("Your markup today", "", pct(mk));
+    html += row("Which publishes at", "", money(curList));
+    html += row("After " + pct(dc) + " off", "", money(curGross));
+    html += row("After commission and processing", "\u00d7 " + pct(keep*100) + " retained", money(curNet));
+    html += '<tr class="total"><td>' + (gap < -0.005 ? "Short of break-even" : gap > 0.005 ? "Above break-even" : "Exactly break-even") +
+            '</td><td class="n ' + (gap < -0.005 ? "neg" : "pos") + '">' + money(gap) + '</td></tr>';
+    html += '</table>';
+
+    if(gap < -0.005){
+      html += '<div class="verdict short">You\'re leaving <b>' + money(Math.abs(gap)) +
+        '</b> on the table per $1,000 booked. Raise the markup from <b>' + pct(mk) + '</b> to <b>' + pct(reqMk) +
+        '</b> \u2014 a difference of ' + pct(reqMk - mk) + '.</div>';
+    } else if(gap > 0.005){
+      html += '<div class="verdict">Your markup clears break-even by <b>' + money(gap) +
+        '</b> per $1,000. You have <b>' + pct(mk - reqMk) + '</b> of room to come down and stay whole.</div>';
+    } else {
+      html += '<div class="verdict ok">Your current markup is already sitting on break-even.</div>';
+    }
+
+    html += '</div>';
+
+    out.innerHTML = html;
+  }
+
+  ["curMarkup","maxDisc","ccFee"].forEach(function(id){
+    $(id).addEventListener("input", render);
+  });
+  ccToggle.addEventListener("change", render);
+
+  syncCC();
+  render();
+})();
+</script>
+</body>
+</html>
